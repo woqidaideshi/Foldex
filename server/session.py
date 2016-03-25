@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+
+import time
 import openstack
 from openstack import connection
 
@@ -7,12 +10,28 @@ class AuthenticationFailure:
     def __str__(self):
         return "Authentication failed."
 
+
+class VMError:
+    """VM状态异常"""
+
+    def __init__(self, msg):
+        self.msg = msg
+
+    def __str__(self):
+        return self.msg
+
+
 class Session(object):
     """用户会话类，以用户的身份执行操作。
     
     默认每个用户拥有独立的同名项目。
     """
     
+    # 状态轮询间隔
+    status_check_interval = 0.5
+    # 等待状态超时时间
+    status_wait_timeout = 10
+
     def __init__(self, username, password):
         """使用用户名和密码创建会话。
         
@@ -44,24 +63,74 @@ class Session(object):
                         result.append(address['addr'])
             return result
 
-        instances = self.conn.compute.servers()
+        instances = self.conn.compute.servers() # instances 是 generator
+
         return [{u'id': vm.id, u'status': vm.status, u'ips': get_floating_ips(vm.addresses)} for vm in instances]
 
+    def wait_for_status(self, vm_id, status, timeout):
+        """等待指定VM达到需要的状态。
+        
+        如果VM处于错误状态或超时则抛出异常。
+        status: 可能的值为 ACTIVE, BUILDING, DELETED, ERROR, HARD_REBOOT, PASSWORD,
+                PAUSED, REBOOT, REBUILD, RESCUED, RESIZED, REVERT_RESIZE, SHUTOFF,
+                SOFT_DELETED, STOPPED, SUSPENDED, UNKNOWN, VERIFY_RESIZE
+        timeout: 超时时限，秒
+        """
+        now = time.time()
+        deadline = now + timeout
+        while now < deadline:
+            vm = self.conn.compute.get_server(vm_id)
+            if vm.status == status:
+                break
+            if vm.status == 'ERROR':
+                raise VMError('VM is in error state.')
+            print('...')
+            time.sleep(self.status_check_interval)
+            now = time.time()
+        else:
+            raise VMError('Action timeout.')
+
     def start_vm(self, vm_id):
-        """启动用户的VM。"""
+        """启动用户的VM。
+        
+        返回时VM已启动，或因错误无法启动，或操作超时。
+        后两者抛出VMError异常。
+        """
         session = self.conn.session
         vm = self.conn.compute.get_server(vm_id)
         if vm.status == 'SHUTOFF': # 只在关机状态下执行
+            print('Starting VM {}'.format(vm_id))
             body = {'os-start': ''}
             vm.action(session, body)
-            # TODO: 确认启动完成后返回
+            self.wait_for_status(vm, 'ACTIVE', self.status_wait_timeout)
+
+    def stop_vm(self, vm_id):
+        """关闭用户的VM。
+        
+        返回时VM已关闭，或因错误无法关闭，或操作超时。
+        后两者抛出VMError异常。
+        """
+        session = self.conn.session
+        vm = self.conn.compute.get_server(vm_id)
+        if vm.status == 'ACTIVE': # 只在开机状态下执行
+            print('Shuting down VM {}'.format(vm_id))
+            body = {'os-stop': ''}
+            vm.action(session, body)
+            self.wait_for_status(vm, 'SHUTOFF', self.status_wait_timeout)
+
 
 def test():
     session = Session('user1', '123456')
     vms = session.get_vms()
     for vm in vms:
         print(vm)
-        session.start_vm(vm['id'])
+        try:
+            session.stop_vm(vm['id'])
+            print('VM powered off.')
+            session.start_vm(vm['id'])
+            print('VM powered on.')
+        except VMError as e:
+            print(e)
 
 
 if __name__ == '__main__':
