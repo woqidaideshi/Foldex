@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 
+import logging
 import time
 import openstack
 from openstack import connection
+
+log = logging.getLogger(__name__)
 
 class AuthenticationFailure:
     """认证异常"""
@@ -84,7 +87,6 @@ class Session(object):
                 break
             if vm.status == 'ERROR':
                 raise VMError('VM is in error state.')
-            print('...')
             time.sleep(self.status_check_interval)
             now = time.time()
         else:
@@ -99,7 +101,7 @@ class Session(object):
         session = self.conn.session
         vm = self.conn.compute.get_server(vm_id)
         if vm.status == 'SHUTOFF': # 只在关机状态下执行
-            print('Starting VM {}'.format(vm_id))
+            log.info('Starting VM {}'.format(vm_id))
             body = {'os-start': ''}
             vm.action(session, body)
             self.wait_for_status(vm, 'ACTIVE', self.status_wait_timeout)
@@ -113,7 +115,7 @@ class Session(object):
         session = self.conn.session
         vm = self.conn.compute.get_server(vm_id)
         if vm.status == 'ACTIVE': # 只在开机状态下执行
-            print('Shuting down VM {}'.format(vm_id))
+            log.info('Shuting down VM {}'.format(vm_id))
             body = {'os-stop': ''}
             vm.action(session, body)
             self.wait_for_status(vm, 'SHUTOFF', self.status_wait_timeout)
@@ -123,15 +125,21 @@ def test():
     session = Session('user1', '123456')
     vms = session.get_vms()
     for vm in vms:
-        print(vm)
+        log.debug(vm)
         try:
             session.stop_vm(vm['id'])
-            print('VM powered off.')
+            log.info('VM powered off.')
             session.start_vm(vm['id'])
-            print('VM powered on.')
+            log.info('VM powered on.')
         except VMError as e:
-            print(e)
+            log.error(e)
 
 
 if __name__ == '__main__':
+    log.setLevel(logging.DEBUG)
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s [%(levelname)s]\t%(name)s | %(message)s')
+    ch.setFormatter(formatter)
+    log.addHandler(ch)
     test()
