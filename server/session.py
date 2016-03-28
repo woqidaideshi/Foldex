@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import re
 import time
 import socket
+import subprocess
 
 import openstack
 
@@ -37,6 +39,8 @@ class Session(object):
     status_check_interval = 0.5
     # 等待状态超时时间
     status_wait_timeout = 10
+    # spice 端口号匹配样式
+    spice_port_pattern = re.compile(r'-spice port=(?P<port>\d+),')
 
     def __init__(self, username, password, project=None):
         """使用用户名和密码创建会话。
@@ -69,8 +73,19 @@ class Session(object):
                         result.append(address['addr'])
             return result
 
+        def get_spice_port(vm_id):
+            ps = subprocess.Popen(['ps', '-ef'], stdout=subprocess.PIPE)
+            qemu = subprocess.Popen(["grep", vm_id], stdin=ps.stdout, stdout=subprocess.PIPE)
+            out = qemu.communicate()[0]
+            m = self.spice_port_pattern.search(out)
+            return m.group('port') if m else ''
+
         instances = self.conn.compute.servers() # instances 是 generator
-        return [{u'id': vm.id, u'status': vm.status, u'floating_ips': get_floating_ips(vm.addresses)} for vm in instances]
+        return [{u'id': vm.id,
+                 u'status': vm.status,
+                 u'floating_ips': get_floating_ips(vm.addresses),
+                 u'spice_port': get_spice_port(vm.id)} for vm in instances]
+
 
     def wait_for_status(self, vm_id, status, timeout):
         """等待指定VM达到需要的状态。
@@ -138,7 +153,7 @@ class AdminSession(Session):
         vms = super(AdminSession, self).get_vms()
         for vm in vms:
             hostname, host_ip = self.get_vm_host(vm['id'])
-            vm[u'hostname'] = hostname
+            vm[u'host_name'] = hostname
             vm[u'host_ip'] = host_ip
         return vms
 
