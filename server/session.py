@@ -146,8 +146,11 @@ class AdminSession(Session):
 
     def get_vm_host(self, vm_id):
         vm = self.conn.compute.get_server(vm_id)
-        host = vm['OS-EXT-SRV-ATTR:hypervisor_hostname']
-        return host, socket.gethostbyname(host)
+        host_name = vm['OS-EXT-SRV-ATTR:hypervisor_hostname']
+        hypervisors = self.conn.compute.hypervisors()
+        host = [hv for hv in hypervisors if hv.hypervisor_hostname == host_name][0]
+        host = self.conn.compute.get_hypervisor(host.id)
+        return host_name, host.host_ip
 
     def get_vms(self):
         vms = super(AdminSession, self).get_vms()
