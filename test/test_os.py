@@ -4,35 +4,12 @@
 import logging
 import logging.config
 import sys, os.path as path 
+import logconf
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from server import session
 
 
-log_conf_dict = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'simple': {
-            'format': '%(asctime)s [%(levelname)s] %(name)s | %(message)s'
-        }
-    },
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-            'level': logging.DEBUG,
-            'formatter': 'simple',
-            'stream': 'ext://sys.stdout'
-        }
-    },
-    'loggers': {
-        'server': {
-            'level': logging.DEBUG,
-            'handlers': ['console']
-        }
-    }
-}
-
-logging.config.dictConfig(log_conf_dict)
+logging.config.dictConfig(logconf.conf_dict)
 log = logging.getLogger('server.test_os')
 
 
