@@ -8,6 +8,7 @@ import subprocess
 
 import openstack
 
+from config import cfg
 from openstack import connection
 
 log = logging.getLogger(__name__)
@@ -122,6 +123,7 @@ class Session(object):
             body = {'os-start': ''}
             vm.action(session, body)
             self.wait_for_status(vm, 'ACTIVE', self.status_wait_timeout)
+            log.info('VM {} powered on'.format(vm_id))
 
     def stop_vm(self, vm_id):
         """关闭用户的VM。
@@ -136,15 +138,22 @@ class Session(object):
             body = {'os-stop': ''}
             vm.action(session, body)
             self.wait_for_status(vm, 'SHUTOFF', self.status_wait_timeout)
+            log.info('VM {} powered off'.format(vm_id))
 
 
 class AdminSession(Session):
+    """管理员会话类。
+    
+    为了能够获得相关信息，管理员需要在每个用户的项目中都拥有管理员权限。
+    """
+
     def __init__(self, project):
-        admin_user = 'admin' # TODO: 从配置中读取
-        admin_pass = '2e85593e07a34568'
+        admin_user = cfg.admin_user
+        admin_pass = cfg.admin_pass
         super(AdminSession, self).__init__(admin_user, admin_pass, project=project)
 
     def get_vm_host(self, vm_id):
+        """获取VM所在服务器的名称和ip。"""
         vm = self.conn.compute.get_server(vm_id)
         host_name = vm['OS-EXT-SRV-ATTR:hypervisor_hostname']
         hypervisors = self.conn.compute.hypervisors()
@@ -153,6 +162,7 @@ class AdminSession(Session):
         return host_name, host.host_ip
 
     def get_vms(self):
+        """获取项目中的VM信息，包含VM所在服务器的名称和ip。"""
         vms = super(AdminSession, self).get_vms()
         for vm in vms:
             hostname, host_ip = self.get_vm_host(vm['id'])
@@ -160,28 +170,3 @@ class AdminSession(Session):
             vm[u'host_ip'] = host_ip
         return vms
 
-
-def test():
-    user = Session('user1', '123456')
-    admin = AdminSession('user1')
-    vms = admin.get_vms()
-    for vm in vms:
-        log.debug(vm)
-
-    #    try:
-    #        session.stop_vm(vm['id'])
-    #        log.info('VM powered off.')
-    #        session.start_vm(vm['id'])
-    #        log.info('VM powered on.')
-    #    except VMError as e:
-    #        log.error(e)
-
-
-if __name__ == '__main__':
-    log.setLevel(logging.DEBUG)
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s [%(levelname)s]\t%(name)s | %(message)s')
-    ch.setFormatter(formatter)
-    log.addHandler(ch)
-    test()
