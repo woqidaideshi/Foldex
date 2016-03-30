@@ -8,10 +8,25 @@ import subprocess
 
 import openstack
 
-from config import cfg
+from oslo_config import cfg
 from openstack import connection
 
 log = logging.getLogger(__name__)
+
+opt_os_group = cfg.OptGroup(name='os',
+                            title='Openstack related options')
+os_opts = [
+    cfg.StrOpt('admin_user', default='admin',
+               help=('OpenStack admin usser')),
+    cfg.StrOpt('admin_pass', default='123456',
+               help=('OpenStack admin password')),
+]
+
+CONF = cfg.CONF
+CONF.register_group(opt_os_group)
+CONF.register_opts(os_opts, opt_os_group)
+CONF(default_config_files=['/etc/foldex/foldex.conf'])
+
 
 class AuthenticationFailure:
     """认证异常"""
@@ -83,9 +98,9 @@ class Session(object):
 
         instances = self.conn.compute.servers() # instances 是 generator
         return [{u'id': vm.id,
-                 u'status': vm.status,
-                 u'floating_ips': get_floating_ips(vm.addresses),
-                 u'spice_port': get_spice_port(vm.id)} for vm in instances]
+            u'status': vm.status,
+            u'floating_ips': get_floating_ips(vm.addresses),
+            u'spice_port': get_spice_port(vm.id)} for vm in instances]
 
 
     def wait_for_status(self, vm_id, status, timeout):
@@ -143,13 +158,13 @@ class Session(object):
 
 class AdminSession(Session):
     """管理员会话类。
-    
+
     为了能够获得相关信息，管理员需要在每个用户的项目中都拥有管理员权限。
     """
 
     def __init__(self, project):
-        admin_user = cfg.admin_user
-        admin_pass = cfg.admin_pass
+        admin_user = CONF.os.admin_user
+        admin_pass = CONF.os.admin_pass
         super(AdminSession, self).__init__(admin_user, admin_pass, project=project)
 
     def get_vm_host(self, vm_id):

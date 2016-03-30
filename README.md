@@ -14,4 +14,4 @@
 
 ## 程序配置
 
-- 将 `etc/vds.conf` 中的参数修改为合适值，复制到 `/etc/vds/`下。
+- 将 `etc/foldex.conf` 中的参数修改为合适值，复制到 `/etc/foldex/`下。
