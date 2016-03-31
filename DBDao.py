@@ -3,10 +3,38 @@ import MySQLdb
 from MySQLdb.cursors import DictCursor
 import config
 
+from oslo_config import cfg
+
+opt_os_group = cfg.OptGroup(name='mysql',
+                            title='Server Mysql Configuration')
+
+os_opts = [
+    cfg.StrOpt('host', default='127.0.0.1',
+                help=('Host IP for Mysql')),
+    cfg.StrOpt('port', default='3306',
+                help=('Host Port for Mysql')),
+    cfg.StrOpt('user', default='root',
+                help=('User to access Mysql')),
+    cfg.StrOpt('password', default='root',
+                help=('Password to access Mysql')),
+    cfg.StrOpt('db', default='foldexserver',
+                help=('Database name used for foldex')),
+    cfg.StrOpt('charset', default='utf8',
+                help=('db charset')),
+    cfg.StrOpt('mincached', default='5',
+                help=('mincached')),
+    cfg.StrOpt('maxcached', default='25',
+                help=('maxcached')),
+] 
+
+CONF = cfg.CONF
+CONF.register_group(opt_os_group)
+CONF.register_opts(os_opts, opt_os_group)
+cfg.CONF(default_config_files=['/etc/foldex/foldex.conf'])
+
 class Mysql(object):
     def __init__(self):
-       self._conn = MySQLdb.connect(host=config.DBHOST, port=config.DBPORT , user=config.USER , passwd=config.PWD ,
-                             db=config.DB,use_unicode= False,charset=config.CHARSET,cursorclass=DictCursor)
+       self._conn = MySQLdb.connect(host=CONF.mysql.host, port=int(CONF.mysql.port) , user=CONF.mysql.user , passwd=CONF.mysql.password , db=CONF.mysql.db, use_unicode= False,charset=CONF.mysql.charset ,cursorclass=DictCursor)
        self._conn.autocommit(True)
        self._cursor=self._conn.cursor()
  
