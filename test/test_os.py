@@ -5,6 +5,7 @@ import logging
 import logging.config
 import sys, os.path as path 
 import logconf
+from oslo_config import cfg
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from server import session
 
@@ -28,4 +29,5 @@ def test():
 
 
 if __name__ == '__main__':
+    cfg.CONF(default_config_files=['/etc/foldex/foldex.conf'])
     test()

@@ -25,7 +25,6 @@ os_opts = [
 CONF = cfg.CONF
 CONF.register_group(opt_os_group)
 CONF.register_opts(os_opts, opt_os_group)
-CONF(default_config_files=['/etc/foldex/foldex.conf'])
 
 
 class AuthenticationFailure:
