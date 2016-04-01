@@ -11,7 +11,7 @@ opt_os_group = cfg.OptGroup(name='mysql',
 os_opts = [
     cfg.StrOpt('host', default='127.0.0.1',
                 help=('Host IP for Mysql')),
-    cfg.StrOpt('port', default='3306',
+    cfg.IntOpt('port', default=3306,
                 help=('Host Port for Mysql')),
     cfg.StrOpt('user', default='root',
                 help=('User to access Mysql')),
@@ -21,20 +21,19 @@ os_opts = [
                 help=('Database name used for foldex')),
     cfg.StrOpt('charset', default='utf8',
                 help=('db charset')),
-    cfg.StrOpt('mincached', default='5',
+    cfg.IntOpt('mincached', default='5',
                 help=('mincached')),
-    cfg.StrOpt('maxcached', default='25',
+    cfg.IntOpt('maxcached', default='25',
                 help=('maxcached')),
 ] 
 
 CONF = cfg.CONF
 CONF.register_group(opt_os_group)
 CONF.register_opts(os_opts, opt_os_group)
-cfg.CONF(default_config_files=['/etc/foldex/foldex.conf'])
 
 class Mysql(object):
     def __init__(self):
-       self._conn = MySQLdb.connect(host=CONF.mysql.host, port=int(CONF.mysql.port) , user=CONF.mysql.user , passwd=CONF.mysql.password , db=CONF.mysql.db, use_unicode= False,charset=CONF.mysql.charset ,cursorclass=DictCursor)
+       self._conn = MySQLdb.connect(host=CONF.mysql.host, port=CONF.mysql.port , user=CONF.mysql.user , passwd=CONF.mysql.password , db=CONF.mysql.db, use_unicode= False,charset=CONF.mysql.charset ,cursorclass=DictCursor)
        self._conn.autocommit(True)
        self._cursor=self._conn.cursor()
  

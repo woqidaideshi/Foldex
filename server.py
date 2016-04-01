@@ -11,7 +11,7 @@ opt_os_group = cfg.OptGroup(name='server',
 os_opts = [
     cfg.StrOpt('host', default='127.0.0.1',
                help=('Host IP')),
-    cfg.StrOpt('port', default='8893',
+    cfg.IntOpt('port', default=8893,
                help=('Host Port')),
 ]
 
@@ -58,7 +58,7 @@ if __name__=='__main__':
     serverRequestHandler=serverRequestHandler.Handler()
     # handler = http.server.SimpleHTTPRequestHandler
     try:
-        server=BaseHTTPServer.HTTPServer((HOST,int(PORT)),RequestHandler)
+        server=BaseHTTPServer.HTTPServer((HOST,PORT),RequestHandler)
         print("server at port ",PORT)
         server.serve_forever()
     except :
