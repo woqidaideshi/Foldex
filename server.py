@@ -18,7 +18,6 @@ os_opts = [
 CONF = cfg.CONF
 CONF.register_group(opt_os_group)
 CONF.register_opts(os_opts, opt_os_group)
-cfg.CONF(default_config_files=['/etc/foldex/foldex.conf'])
 
 class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
@@ -54,9 +53,11 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 if __name__=='__main__':
 
+    cfg.CONF(default_config_files=['/etc/foldex/foldex.conf'])
     HOST,PORT=CONF.server.host,CONF.server.port
     serverRequestHandler=serverRequestHandler.Handler()
     # handler = http.server.SimpleHTTPRequestHandler
+    
     try:
         server=BaseHTTPServer.HTTPServer((HOST,PORT),RequestHandler)
         print("server at port ",PORT)
