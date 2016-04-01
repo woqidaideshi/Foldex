@@ -5,10 +5,10 @@ import config
 
 from oslo_config import cfg
 
-opt_os_group = cfg.OptGroup(name='mysql',
+opt_db_group = cfg.OptGroup(name='mysql',
                             title='Server Mysql Configuration')
 
-os_opts = [
+db_opts = [
     cfg.StrOpt('host', default='127.0.0.1',
                 help=('Host IP for Mysql')),
     cfg.IntOpt('port', default=3306,
@@ -28,8 +28,8 @@ os_opts = [
 ] 
 
 CONF = cfg.CONF
-CONF.register_group(opt_os_group)
-CONF.register_opts(os_opts, opt_os_group)
+CONF.register_group(opt_db_group)
+CONF.register_opts(db_opts, opt_db_group)
 
 class Mysql(object):
     def __init__(self):
