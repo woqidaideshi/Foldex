@@ -53,7 +53,7 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 if __name__=='__main__':
 
-    cfg.CONF(default_config_files=['../config.ini'])
+    cfg.CONF(default_config_files=['/etc/foldex/foldex.conf'])
     HOST,PORT=CONF.server.host,CONF.server.port
     serverRequestHandler=serverRequestHandler.Handler()
     # handler = http.server.SimpleHTTPRequestHandler
