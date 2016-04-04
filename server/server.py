@@ -5,10 +5,10 @@ import serverRequestHandler
 
 from oslo_config import cfg
 
-opt_os_group = cfg.OptGroup(name='server',
+opt_server_group = cfg.OptGroup(name='server',
                             title='Foldex Server IP Port')
 
-os_opts = [
+server_opts = [
     cfg.StrOpt('host', default='127.0.0.1',
                help=('Host IP')),
     cfg.IntOpt('port', default=8893,
@@ -16,8 +16,8 @@ os_opts = [
 ]
 
 CONF = cfg.CONF
-CONF.register_group(opt_os_group)
-CONF.register_opts(os_opts, opt_os_group)
+CONF.register_group(opt_server_group)
+CONF.register_opts(server_opts, opt_server_group)
 
 class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
