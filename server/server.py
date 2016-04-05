@@ -2,8 +2,14 @@
 import BaseHTTPServer
 import json
 import serverRequestHandler
+import logconf
 
 from oslo_config import cfg
+
+
+logging.config.dictConfig(logconf.conf_dict)
+log = logging.getLogger('server.server')
+
 
 opt_server_group = cfg.OptGroup(name='server',
                             title='Foldex Server IP Port')
@@ -22,7 +28,7 @@ CONF.register_opts(server_opts, opt_server_group)
 class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
     def do_GET( self ):
-        print "get------------"
+        log.debug("get------------")
         datas = self.rfile.read(int(self.headers['content-length']))
         # print datas
         # print self.client_address
@@ -32,12 +38,12 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 
     def do_POST( self ):
-        print "post----------"
+        log.debug("post----------")
         datas = self.rfile.read(int(self.headers['content-length']))
         serverRequestHandler.processMsg(self.path[1:],json.loads(datas),self.sendResult)
 
     def sendResult(self,msg):
-        print 'result:',msg
+        log.debug('result:',msg)
         if msg.has_key('err'):
             self.send_response( 500 )
         else:
@@ -51,16 +57,20 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.wfile.write( msg )
         print 'ok'
 
-if __name__=='__main__':
 
+def main():
     cfg.CONF(default_config_files=['/etc/foldex/foldex.conf'])
-    HOST,PORT=CONF.server.host,CONF.server.port
-    serverRequestHandler=serverRequestHandler.Handler()
+    host, port = CONF.server.host, CONF.server.port
+    serverRequestHandler = serverRequestHandler.Handler()
     # handler = http.server.SimpleHTTPRequestHandler
     
     try:
-        server=BaseHTTPServer.HTTPServer((HOST,PORT),RequestHandler)
-        print("server at port ",PORT)
+        server = BaseHTTPServer.HTTPServer((host, port), RequestHandler)
+        log.debug("Serving at port {}".format(port))
         server.serve_forever()
     except :
-        print "sth wrong"
+        log.debug("Failed to start server")
+
+
+if __name__ == '__main__':
+    main()
