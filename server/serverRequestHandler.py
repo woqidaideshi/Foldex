@@ -1,7 +1,7 @@
 #encoding=utf-8
 import DBDao
 
-class Handler():
+class Handler(object):
     def __init__(self):
         print 'serverRequestHandler'
         self.processFuncs={
