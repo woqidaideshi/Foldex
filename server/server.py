@@ -28,13 +28,17 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         # print self.client_address
         # print self.path
         # print self.command
-        serverRequestHandler.processMsg(self.path[1:],json.loads(datas),self.sendResult)
+        dataObj=json.loads(datas)
+        dataObj['ip']=self.client_address
+        serverRequestHandler.processMsg(self.path[1:],dataObj,self.sendResult)
 
 
     def do_POST( self ):
         print "post----------"
         datas = self.rfile.read(int(self.headers['content-length']))
-        serverRequestHandler.processMsg(self.path[1:],json.loads(datas),self.sendResult)
+        dataObj=json.loads(datas)
+        dataObj['ip']=self.client_address
+        serverRequestHandler.processMsg(self.path[1:],dataObj,self.sendResult)
 
     def sendResult(self,msg):
         print 'result:',msg
@@ -53,7 +57,7 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 if __name__=='__main__':
 
-    cfg.CONF(default_config_files=['/etc/foldex/foldex.conf'])
+    cfg.CONF(default_config_files=['../etc/foldex.conf'])
     HOST,PORT=CONF.server.host,CONF.server.port
     serverRequestHandler=serverRequestHandler.Handler()
     # handler = http.server.SimpleHTTPRequestHandler

@@ -30,12 +30,22 @@ CONF = cfg.CONF
 CONF.register_group(opt_db_group)
 CONF.register_opts(db_opts, opt_db_group)
 
+
+class MysqlError:
+    """获取数据内容状态异常"""
+
+    def __init__(self, msg):
+        self.msg = msg
+
+    def __str__(self):
+        return self.msg
+
 class Mysql(object):
     def __init__(self):
        self._conn = MySQLdb.connect(host=CONF.mysql.host,
                                     port=CONF.mysql.port,
                                     user=CONF.mysql.user,
-                                    passwd=CONF.mysql.password,
+                                    passwd='root',#CONF.mysql.password,
                                     db=CONF.mysql.db,
                                     use_unicode=False,
                                     charset=CONF.mysql.charset,
@@ -173,3 +183,16 @@ class Mysql(object):
             self.end('rollback');
         self._cursor.close()
         self._conn.close()
+
+
+def getStrategyByUser(mysqlConn,userName):
+    try:
+        strategy=mysqlConn.getOneRow('SELECT * FROM USER WHERE USERNAME=\"'+userName+'\"')
+        return strategy['strategy']
+    except:
+        raise MysqlError('fail to get strategy for '+userName)
+
+
+mysql=Mysql();
+rst=getStrategyByUser(mysql,'user2')
+print 'rst',rst
